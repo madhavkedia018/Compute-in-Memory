@@ -46,4 +46,4 @@ module controller (
             default: next = IDLE;
         endcase
     end
-endmodule
+endmodule 
