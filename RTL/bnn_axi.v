@@ -1,6 +1,6 @@
 `timescale 1ns / 1ps
 
-module cnn_axi #
+module bnn_axi #
 (
     parameter integer C_S_AXI_DATA_WIDTH = 32,
     parameter integer C_S_AXI_ADDR_WIDTH = 6
@@ -41,7 +41,7 @@ module cnn_axi #
     wire [7:0] result;
 
     // Connect to your CNN compute module
-    cnn_top core (
+    bnn_core core (
         .clk(clk),
         .reset(~resetn),
         .start(start),
