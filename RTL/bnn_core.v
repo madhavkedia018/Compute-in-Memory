@@ -1,4 +1,4 @@
-module cnn_top (
+module bnn_core (
     input clk, reset, start,
     input [7:0] in_vector,
     input [7:0] weight_vector,
