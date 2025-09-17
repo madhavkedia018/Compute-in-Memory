@@ -1,13 +1,14 @@
+`timescale 1ns/1ps
+
 module approx_add (
     input  [7:0] A,
     input  [7:0] B,
-    output [7:0] SUM
+    output [8:0] SUM
 );
-    wire [7:0] exact_sum;
-    assign exact_sum = A + B;
+    // Approximate addition for lower 6 bits
+    assign SUM[5:0] = A[5:0] | B[5:0];   // OR-based approximation
 
-    // Approximate: truncate carry from bits 2 to 5
-    assign SUM[1:0] = exact_sum[1:0];
-    assign SUM[7:2] = A[7:2] | B[7:2]; // Use OR as a fast approximation
-
+    // Exact addition for upper 2 bits (no carry from lower part)
+    assign SUM[8:6] = A[7:6] + B[7:6];   // carry from lower 2 ignored
 endmodule
+
