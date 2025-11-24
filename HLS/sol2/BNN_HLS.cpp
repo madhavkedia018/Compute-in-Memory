@@ -1,3 +1,8 @@
+/************************************************************
+ *  BNN_HLS.cpp  — Corrected & Vitis-HLS Compatible
+ *  Full forward-pass of VGG_SMALL_1W1A (Binary CNN)
+ ************************************************************/
+
 #include "ap_int.h"
 #include <math.h>
 
@@ -27,72 +32,73 @@
 
 #define NUM_CLASSES 10
 
-// ====== FEATURE MAP SIZES ACROSS NETWORK ======
-
-#define H0 IMG_H       // after conv0
+// ====== FEATURE MAP SIZES ======
+#define H0 IMG_H
 #define W0 IMG_W
 
-#define H1 (H0/POOL)   // after conv1 + pool
+#define H1 (H0/POOL)
 #define W1 (W0/POOL)
 
-#define H2 (H1)        // after conv2 only
-#define W2 (W1)
+#define H2 H1
+#define W2 W1
 
-#define H3 (H2/POOL)   // after conv3 + pool
+#define H3 (H2/POOL)
 #define W3 (W2/POOL)
 
-#define H4 (H3)        // after conv4 only
-#define W4 (W3)
+#define H4 H3
+#define W4 W3
 
-#define H5 (H4/POOL)   // after conv5 + pool
+#define H5 (H4/POOL)
 #define W5 (W4/POOL)
 
-// ====== WEIGHTS (Dummy) ======
-static signed char W1[C1_OUT][C1_IN][K][K];
-static float SCALE1[C1_OUT];
-static float BIAS1[C1_OUT];
 
-static signed char W2[C2_OUT][C2_IN][K][K];
-static float SCALE2[C2_OUT];
-static float BIAS2[C2_OUT];
+// ====== WEIGHTS (Renamed: W1w, SCALE1w, BIAS1w, etc.) ======
+static signed char W1w[C1_OUT][C1_IN][K][K];
+static float SCALE1w[C1_OUT];
+static float BIAS1w[C1_OUT];
 
-static signed char W3[C3_OUT][C3_IN][K][K];
-static float SCALE3[C3_OUT];
-static float BIAS3[C3_OUT];
+static signed char W2w[C2_OUT][C2_IN][K][K];
+static float SCALE2w[C2_OUT];
+static float BIAS2w[C2_OUT];
 
-static signed char W4[C4_OUT][C4_IN][K][K];
-static float SCALE4[C4_OUT];
-static float BIAS4[C4_OUT];
+static signed char W3w[C3_OUT][C3_IN][K][K];
+static float SCALE3w[C3_OUT];
+static float BIAS3w[C3_OUT];
 
-static signed char W5[C5_OUT][C5_IN][K][K];
-static float SCALE5[C5_OUT];
-static float BIAS5[C5_OUT];
+static signed char W4w[C4_OUT][C4_IN][K][K];
+static float SCALE4w[C4_OUT];
+static float BIAS4w[C4_OUT];
+
+static signed char W5w[C5_OUT][C5_IN][K][K];
+static float SCALE5w[C5_OUT];
+static float BIAS5w[C5_OUT];
 
 static float FC_W[NUM_CLASSES][C5_OUT*H5*W5];
 static float FC_B[NUM_CLASSES];
 
-// Helper: sign → bit
+// Convert float to binary bit
 inline int signbitf(float x) { return x >= 0 ? 1 : 0; }
 
-// XNOR Binary Convolution (single layer)
+
+// ================= XNOR + POPCOUNT CONV ===================
 template<int IN_C, int OUT_C, int IN_H, int IN_W, int OUT_H, int OUT_W>
-void xnor_conv(float in[IN_C][IN_H][IN_W],
-               float out[OUT_C][OUT_H][OUT_W],
-               signed char W[OUT_C][IN_C][K][K],
-               float SCALE[OUT_C],
-               float BIAS[OUT_C])
-{
-    conv_loop:
-    for(int oc=0; oc<OUT_C; oc++){
-        for(int oy=0; oy<OUT_H; oy++){
-            for(int ox=0; ox<OUT_W; ox++){
+void xnor_conv(
+    float in[IN_C][IN_H][IN_W],
+    float out[OUT_C][OUT_H][OUT_W],
+    signed char W[OUT_C][IN_C][K][K],
+    float SCALE[OUT_C],
+    float BIAS[OUT_C]
+){
+    for(int oc = 0; oc < OUT_C; oc++){
+        for(int oy = 0; oy < OUT_H; oy++){
+            for(int ox = 0; ox < OUT_W; ox++){
 #pragma HLS PIPELINE II=1
                 int pop = 0;
-                int total = IN_C*K*K;
+                int total = IN_C * K * K;
 
-                for(int ic=0; ic<IN_C; ic++){
-                    for(int ky=0; ky<K; ky++){
-                        for(int kx=0; kx<K; kx++){
+                for(int ic = 0; ic < IN_C; ic++){
+                    for(int ky = 0; ky < K; ky++){
+                        for(int kx = 0; kx < K; kx++){
                             float a = in[ic][oy+ky][ox+kx];
                             int abit = signbitf(a);
                             int wbit = (W[oc][ic][ky][kx] > 0) ? 1 : 0;
@@ -100,26 +106,26 @@ void xnor_conv(float in[IN_C][IN_H][IN_W],
                         }
                     }
                 }
-                int dot = 2*pop - total;     // popcount → dot-product
-                out[oc][oy][ox] = SCALE[oc]*dot + BIAS[oc];
+                int dot = 2 * pop - total;
+                out[oc][oy][ox] = SCALE[oc] * dot + BIAS[oc];
             }
         }
     }
 }
 
-// MaxPool 2×2
+
+// ================= MaxPool 2×2 ==================
 template<int C, int IN_H, int IN_W, int OUT_H, int OUT_W>
-void maxpool(float in[C][IN_H][IN_W],
-             float out[C][OUT_H][OUT_W])
+void maxpool(float in[C][IN_H][IN_W], float out[C][OUT_H][OUT_W])
 {
-    for(int c=0;c<C;c++){
-        for(int y=0;y<OUT_H;y++){
-            for(int x=0;x<OUT_W;x++){
+    for(int c = 0; c < C; c++){
+        for(int y = 0; y < OUT_H; y++){
+            for(int x = 0; x < OUT_W; x++){
 #pragma HLS PIPELINE II=1
                 float m = -1e9;
-                for(int ky=0;ky<POOL;ky++)
-                    for(int kx=0;kx<POOL;kx++){
-                        float v = in[c][y*POOL+ky][x*POOL+kx];
+                for(int ky = 0; ky < POOL; ky++)
+                    for(int kx = 0; kx < POOL; kx++){
+                        float v = in[c][y*POOL + ky][x*POOL + kx];
                         if(v > m) m = v;
                     }
                 out[c][y][x] = m;
@@ -128,26 +134,28 @@ void maxpool(float in[C][IN_H][IN_W],
     }
 }
 
-// Hardtanh Activation
+
+// ================= Hardtanh ==================
 template<int C, int H, int W>
 void hardtanh(float x[C][H][W])
 {
     for(int c=0;c<C;c++)
         for(int y=0;y<H;y++)
-            for(int x1=0;x1<W;x1++){
+            for(int xx=0;xx<W;xx++){
 #pragma HLS PIPELINE II=1
-                float v = x[c][y][x1];
-                if(v>1) v=1;
-                if(v<-1) v=-1;
-                x[c][y][x1] = v;
+                float v = x[c][y][xx];
+                if(v > 1) v = 1;
+                if(v < -1) v = -1;
+                x[c][y][xx] = v;
             }
 }
 
-// Fully Connected
+
+// ================= Fully Connected ==================
 void fc(float in[C5_OUT][H5][W5], float out[NUM_CLASSES])
 {
-    float flat[C5_OUT*H5*W5];
-    int idx=0;
+    float flat[C5_OUT * H5 * W5];
+    int idx = 0;
 
     for(int c=0;c<C5_OUT;c++)
         for(int y=0;y<H5;y++)
@@ -162,11 +170,12 @@ void fc(float in[C5_OUT][H5][W5], float out[NUM_CLASSES])
     }
 }
 
-// =========== TOP MODULE ============
+
+// ================= TOP MODULE ==================
 extern "C" void BNN_VGG_FORWARD(
     float input[C0_IN][IMG_H][IMG_W],
-    float output[NUM_CLASSES])
-{
+    float output[NUM_CLASSES]
+){
 #pragma HLS INTERFACE m_axi port=input  offset=slave bundle=gmem0
 #pragma HLS INTERFACE m_axi port=output offset=slave bundle=gmem1
 #pragma HLS INTERFACE s_axilite port=input  bundle=ctrl
@@ -179,29 +188,29 @@ extern "C" void BNN_VGG_FORWARD(
     static float F4[C4_OUT][H4][W4];
     static float F5[C5_OUT][H5][W5];
 
-    // ===== Conv1 =====
-    xnor_conv<C1_IN,C1_OUT,H0,W0,H1,W1>(input,F1,W1,SCALE1,BIAS1);
-    maxpool<C1_OUT,H1,W1,H1,W1>(F1,F1);
+    // Conv1
+    xnor_conv<C1_IN,C1_OUT,H0,W0,H1,W1>(input, F1, W1w, SCALE1w, BIAS1w);
+    maxpool<C1_OUT,H1,W1,H1,W1>(F1, F1);
     hardtanh<C1_OUT,H1,W1>(F1);
 
-    // ===== Conv2 =====
-    xnor_conv<C2_IN,C2_OUT,H1,W1,H2,W2>(F1,F2,W2,SCALE2,BIAS2);
+    // Conv2
+    xnor_conv<C2_IN,C2_OUT,H1,W1,H2,W2>(F1, F2, W2w, SCALE2w, BIAS2w);
     hardtanh<C2_OUT,H2,W2>(F2);
 
-    // ===== Conv3 =====
-    xnor_conv<C3_IN,C3_OUT,H2,W2,H3,W3>(F2,F3,W3,SCALE3,BIAS3);
-    maxpool<C3_OUT,H3,W3,H3,W3>(F3,F3);
+    // Conv3
+    xnor_conv<C3_IN,C3_OUT,H2,W2,H3,W3>(F2, F3, W3w, SCALE3w, BIAS3w);
+    maxpool<C3_OUT,H3,W3,H3,W3>(F3, F3);
     hardtanh<C3_OUT,H3,W3>(F3);
 
-    // ===== Conv4 =====
-    xnor_conv<C4_IN,C4_OUT,H3,W3,H4,W4>(F3,F4,W4,SCALE4,BIAS4);
+    // Conv4
+    xnor_conv<C4_IN,C4_OUT,H3,W3,H4,W4>(F3, F4, W4w, SCALE4w, BIAS4w);
     hardtanh<C4_OUT,H4,W4>(F4);
 
-    // ===== Conv5 =====
-    xnor_conv<C5_IN,C5_OUT,H4,W4,H5,W5>(F4,F5,W5,SCALE5,BIAS5);
-    maxpool<C5_OUT,H5,W5,H5,W5>(F5,F5);
+    // Conv5
+    xnor_conv<C5_IN,C5_OUT,H4,W4,H5,W5>(F4, F5, W5w, SCALE5w, BIAS5w);
+    maxpool<C5_OUT,H5,W5,H5,W5>(F5, F5);
     hardtanh<C5_OUT,H5,W5>(F5);
 
-    // ===== FC =====
-    fc(F5,output);
+    // FC
+    fc(F5, output);
 }
