@@ -25,7 +25,7 @@ The accelerator is integrated into the PYNQ framework as a **custom hardware ove
 
 ## 🚀 Features
 
-- FPGA-based BNN accelerator with microsecond-level latency  
+- FPGA-based BNN accelerator with millisecond-level latency  
 - Approximate computing for reduced power and hardware usage  
 - End-to-end pipeline: training → binarisation → RTL → bitstream  
 - Live inference using Webcam + PYNQ Jupyter Notebook  
@@ -37,7 +37,7 @@ The accelerator is integrated into the PYNQ framework as a **custom hardware ove
 ## ⚙️ System Architecture
 
 ### 🔹 End-to-End Workflow
-1. Train full-precision VGG model on CIFAR-10  
+1. Train full-precision VGG16 model on CIFAR-10  
 2. Apply **IR-Net (Information Retention)** based binarisation  
 3. Export **1-bit weights & thresholds** to C headers  
 4. Implement hardware blocks in Verilog (SWU, MVU, Pooling, FC)
@@ -90,7 +90,7 @@ BNN correctly classifies objects live from a webcam:
 ## 📘 Documentation
 
 The complete Project Report is available here: https://drive.google.com/file/d/1zeQQKxoYLFZR4dIEqhLo2raIPfjUwMdd/view?usp=drive_link
-
+Refer to the poster for an overview of the project: https://drive.google.com/file/d/1jB_I_RsA957MiNWEfJ8Q1-CZOc93oxGC/view?usp=drive_link
 
 ---
 
