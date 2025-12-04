@@ -89,7 +89,7 @@ BNN correctly classifies objects live from a webcam:
 
 ## 📘 Documentation
 
-The complete Project Report is available here: https://drive.google.com/file/d/1zeQQKxoYLFZR4dIEqhLo2raIPfjUwMdd/view?usp=drive_link
+The complete Project Report is available here: https://drive.google.com/file/d/1zeQQKxoYLFZR4dIEqhLo2raIPfjUwMdd/view?usp=drive_link <br>
 Refer to the poster for an overview of the project: https://drive.google.com/file/d/1jB_I_RsA957MiNWEfJ8Q1-CZOc93oxGC/view?usp=drive_link
 
 ---
