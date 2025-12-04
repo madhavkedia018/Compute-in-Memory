@@ -40,9 +40,11 @@ The accelerator is integrated into the PYNQ framework as a **custom hardware ove
 1. Train full-precision VGG model on CIFAR-10  
 2. Apply **IR-Net (Information Retention)** based binarisation  
 3. Export **1-bit weights & thresholds** to C headers  
-4. Implement hardware blocks in Verilog (SWU, MVU, Pooling, FC)  
-5. Synthesize in Vivado → generate `bnn.bit` & `bnn.hwh`  
-6. Load overlay on PYNQ → run inference via Python API  
+4. Implement hardware blocks in Verilog (SWU, MVU, Pooling, FC)
+5. Package the RTL design as a **custom IP core**, then construct the full hardware system in Vivado using a block diagram.
+6. Generate the **HDL wrapper**.
+7. Synthesize in Vivado → generate `bnn.bit` & `bnn.hwh`  
+8. Load overlay on PYNQ → run inference via Python API  
 
 ---
 
@@ -87,17 +89,17 @@ BNN correctly classifies objects live from a webcam:
 
 ## 📘 Documentation
 
-The complete Major Project Report is available here: https://drive.google.com/file/d/1zeQQKxoYLFZR4dIEqhLo2raIPfjUwMdd/view?usp=drive_link
+The complete Project Report is available here: https://drive.google.com/file/d/1zeQQKxoYLFZR4dIEqhLo2raIPfjUwMdd/view?usp=drive_link
 
 
 ---
 
 ## 🛠 Future Work
 
--[ ] Add multi-bit activations (2–4 bit XNOR networks)  
--[ ] Extend to larger datasets (Tiny-ImageNet / ImageNet-100)  
--[ ] Integrate DMA-based streaming for higher throughput  
--[ ] Deploy on more advanced FPGA boards (ZCU104 / Ultra96-V2)
+- [ ] Add multi-bit activations (2–4 bit XNOR networks)  
+- [ ] Extend to larger datasets (Tiny-ImageNet / ImageNet-100)  
+- [ ] Integrate DMA-based streaming for higher throughput  
+- [ ] Deploy on more advanced FPGA boards (ZCU104 / Ultra96-V2)
 
 
 
