@@ -80,7 +80,7 @@ The accelerator is integrated into the PYNQ framework as a **custom hardware ove
 BNN correctly classifies objects live from a webcam:
 
 
- <img width="500" height="500" alt="image" src="https://github.com/user-attachments/assets/e57fdee8-7cb8-48d2-b79a-e268bde830b8" /> <img width="500" height="500" alt="image" src="https://github.com/user-attachments/assets/a48889c4-ead3-4bd4-a80d-44218eadb781" />
+ <img width="500" height="500" alt="image" src="https://github.com/user-attachments/assets/e57fdee8-7cb8-48d2-b79a-e268bde830b8" />  <img width="500" height="700" alt="image" src="https://github.com/user-attachments/assets/a48889c4-ead3-4bd4-a80d-44218eadb781" />
 
 
 ---
