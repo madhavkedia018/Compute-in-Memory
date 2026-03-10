@@ -3,7 +3,7 @@
 
 ---
 
-![License](https://img.shields.io/badge/License-MIT-green.svg)
+
 ![Platform](https://img.shields.io/badge/Platform-PYNQ--Z2-blue.svg)
 ![Language](https://img.shields.io/badge/Language-Python%20%7C%20Verilog-orange.svg)
 
